@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get User Location</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.13.0/css/ol.css" type="text/css">
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.13.0/build/ol.js"></script>
+  <style>
+    .map {
+      height: 400px;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <button id="btnGetLocation">Get Location</button>
+
+  <p id="note"></p>
+  <p id="long"></p>
+  <p id="lat"></p>
+  <p id="time"></p>
+
+  <div class="map" id="map"></div>
+
+  <script>
+    const note = document.getElementById('note')
+    const btnGetLocation = document.getElementById('btnGetLocation')
+    btnGetLocation.addEventListener('click', (e) => {
+
+      if (navigator.geolocation)
+        navigator.geolocation.getCurrentPosition(showPosition, error)
+      else
+        note.innerHTML = 'Geolocation is not supported by this browser'
+    })
+
+    function showPosition(pos) {
+      const time = new Date(pos.timestamp)
+      document.getElementById('long').innerText = `long: ${pos.coords.longitude}`
+      document.getElementById('lat').innerText = `lat: ${pos.coords.latitude}`
+      document.getElementById('time').innerText = `time: ${time}`
+
+      markLocation(pos.coords.longitude, pos.coords.latitude)
+    }
+
+    function error(err) {
+      console.log(err)
+    }
+
+    const map = new ol.Map({
+      target:'map',
+      layers:[
+        new ol.layer.Tile({
+          source: new ol.source.OSM()
+        })
+      ],
+      view: new ol.View({
+        center:ol.proj.fromLonLat([107.6191, -6.9175]),
+        zoom:11
+      })
+    })
+
+  function markLocation(posLong, posLat){
+    const marker = new ol.Feature({
+      geometry: new ol.geom.Point(ol.proj.fromLonLat([posLong, posLat]))
+    })
+
+    const vectorSrc = new ol.source.Vector({
+      features:[marker]
+    })
+
+    const markerVectorLayer = new ol.layer.Vector({
+      source: vectorSrc,
+    })
+
+    map.addLayer(markerVectorLayer)
+
+    map.getView().setCenter(ol.proj.transform([posLong, posLat], 'EPSG:4326', 'EPSG:3857'));
+    map.getView().setZoom(19);
+  }
+  </script>
+</body>
+
+</html>
